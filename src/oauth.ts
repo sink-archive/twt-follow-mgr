@@ -5,13 +5,33 @@ import { createSignal } from "solid-js";
 export const oauthClient = new auth.OAuth2User({
   callback: location.origin,
   client_id: "U1Z0R1p5bElackdmV1BIS0hrc1A6MTpjaQ",
-  scopes: ["follows.read", "follows.write", "list.read", "users.read"],
+  scopes: [
+    // read followers
+    "follows.read",
+    // follow/unfollow people
+    "follows.write",
+    // twitter list filtering
+    "list.read",
+    // see private users, see if notifying
+    "users.read",
+    // see your own username (idk why this is needed LMAO)
+    "tweet.read",
+  ],
+  token: getExistingToken()
 });
 
 const STATE = "OAUTH_STATE_SRNTORFNDORIESNOSUNRDP";
 const CHALLENGE = "OAUTH_CHALLENGE_SONTRSIDHOSRETOMSRD";
 
+function getExistingToken() {
+  let tok = JSON.parse(localStorage.getItem("token") ?? "null");
+
+  return tok?.expires_at > Date.now() ? tok : undefined;
+}
+
 export async function handleAuthentication() {
+  if (getExistingToken()) return true;
+
   const matches = Array.from(
     location.search.matchAll(/(?:[&?]((?:code|state))=([a-zA-Z0-9_]+))/g)
   );
@@ -35,9 +55,9 @@ export async function handleAuthentication() {
     });
 
     try {
-      await oauthClient.requestAccessToken(code);
-    }
-    catch {
+      const tok = await oauthClient.requestAccessToken(code);
+      localStorage.setItem("token", JSON.stringify(tok.token));
+    } catch {
       // just retry lol
       location.search = "";
     }
@@ -45,7 +65,7 @@ export async function handleAuthentication() {
     if (history?.pushState) {
       const newUrl = new URL(location.href);
       newUrl.search = "";
-      history.pushState({path: newUrl.href}, '', newUrl.href);
+      history.pushState({ path: newUrl.href }, "", newUrl.href);
     }
 
     return true;
