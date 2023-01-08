@@ -1,11 +1,7 @@
 import { createSignal, Show } from "solid-js";
 import MainLoaded from "./components/MainLoaded";
-import { FollowedUser } from "./TwitterClient";
 import { isAuthed } from "./oauth";
-
-type UserData = {
-  following: FollowedUser[];
-};
+import { UserData } from "./TwitterClient";
 
 export default () => {
   const [userData, setUserData] = createSignal<UserData>();
@@ -22,7 +18,9 @@ export default () => {
 
       <Show
         when={isAuthed()}
-        fallback={"Logging into Twitter... If you see this for too long something probably failed."}
+        fallback={
+          "Logging into Twitter... If you see this for too long something probably failed."
+        }
       >
         <MainLoaded />
       </Show>

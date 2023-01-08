@@ -1,7 +1,7 @@
 import "./fetchPatch";
 import { Client } from "twitter-api-sdk";
-import {isAuthed, oauthClient} from "./oauth";
-import {createEffect, createSignal} from "solid-js";
+import { isAuthed, oauthClient } from "./oauth";
+import { createEffect, createSignal } from "solid-js";
 
 export const client = new Client(oauthClient);
 
@@ -11,6 +11,13 @@ export const getUserId = (username: string) =>
     .then((u) => u.data?.id);
 
 export type FollowedUser = { id: string; name: string; username: string };
+
+export type UserData = {
+  id: string;
+  username: string;
+  name: string;
+  following: FollowedUser[];
+};
 
 export async function getFollowing(id: string) {
   const following: FollowedUser[] = [];
@@ -24,15 +31,23 @@ export async function getFollowing(id: string) {
   return following;
 }
 
+const [userData, setUserData] = createSignal<UserData>();
+export { userData };
 
-const [authedUser, setAuthedUser] = createSignal<Awaited<ReturnType<typeof client.users.findMyUser>>>();
-export {authedUser};
 let authedUserRan = false;
 createEffect(async () => {
   if (authedUserRan) return;
 
   if (isAuthed()) {
     authedUserRan = true;
-    client.users.findMyUser().then(setAuthedUser);
+    const user = (await client.users.findMyUser()).data;
+    if (!user) return;
+
+    const following = await getFollowing(user.id);
+
+    setUserData({
+      ...user,
+      following,
+    });
   }
-})
+});
