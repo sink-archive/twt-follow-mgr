@@ -1,5 +1,1 @@
-import { FollowedUser } from "../TwitterClient"
-
-export default (props: {
-  followers: FollowedUser[]
-}) => <div />
+export default () => <h1>You are logged into twitter</h1>
